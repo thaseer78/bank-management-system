@@ -22,6 +22,7 @@ class Customer(UserMixin):
         self.last_name = data['last_name']
         self.password_hash = data['password_hash']
         self.user_type = 'customer'
+        self.is_active = True
 
     def get_id(self):
         return f"customer_{self.customer_id}"
@@ -79,6 +80,7 @@ class Admin(UserMixin):
         self.password_hash = data['password_hash']
         self.full_name = data.get('full_name', '')
         self.user_type = 'admin'
+        self.is_active = True
 
     def get_id(self):
         return f"admin_{self.admin_id}"
