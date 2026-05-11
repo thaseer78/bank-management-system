@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Account - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1>➕ Create New Account</h1>
+        <p>Open a new bank account for a customer</p>
+    </div>
+    
+    <div class="form-card">
+        <form method="POST" action="{{ url_for('admin.create_account') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="form-group">
+                <label for="customer_id">Select Customer *</label>
+                <select id="customer_id" name="customer_id" required>
+                    <option value="">Choose a customer</option>
+                    {% for customer in customers %}
+                    <option value="{{ customer.customer_id }}">
+                        {{ customer.first_name }} {{ customer.last_name }} ({{ customer.email }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="account_type">Account Type *</label>
+                <select id="account_type" name="account_type" required>
+                    <option value="">Select account type</option>
+                    <option value="savings">Savings Account (4% interest)</option>
+                    <option value="checking">Checking Account (No interest)</option>
+                    <option value="fixed_deposit">Fixed Deposit (7% interest)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="initial_deposit">Initial Deposit (₹)</label>
+                <input type="number" id="initial_deposit" name="initial_deposit" 
+                       min="0" step="0.01" value="0" placeholder="Enter initial deposit amount">
+            </div>
+            
+            <div class="form-actions">
+                <a href="{{ url_for('admin.accounts') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

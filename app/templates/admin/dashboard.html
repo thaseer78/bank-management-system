@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="page-header">
+        <h1>Admin Dashboard</h1>
+        <p>Welcome back, {{ current_user.full_name }}</p>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="stats-grid stats-grid-4">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-content">
+                <h3>Total Customers</h3>
+                <p class="stat-value">{{ total_customers }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">🏦</div>
+            <div class="stat-content">
+                <h3>Active Accounts</h3>
+                <p class="stat-value">{{ total_accounts }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+                <h3>Total Deposits</h3>
+                <p class="stat-value">₹{{ "{:,.0f}".format(total_balance) }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card stat-card-warning">
+            <div class="stat-icon">📋</div>
+            <div class="stat-content">
+                <h3>Pending Loans</h3>
+                <p class="stat-value">{{ pending_loans }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Today's Summary -->
+    <div class="stats-grid">
+        <div class="stat-card stat-card-small">
+            <div class="stat-content">
+                <h3>Today's Transactions</h3>
+                <p class="stat-value">{{ today_transactions }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card stat-card-small">
+            <div class="stat-content">
+                <h3>Today's Deposits</h3>
+                <p class="stat-value">₹{{ "{:,.2f}".format(today_deposits) }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dashboard-grid">
+        <!-- Recent Transactions -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2>Recent Transactions</h2>
+                <a href="{{ url_for('admin.transactions') }}" class="btn btn-sm">View All</a>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Customer</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for txn in recent_transactions %}
+                        <tr>
+                            <td>{{ txn.created_at.strftime('%H:%M') }}</td>
+                            <td>{{ txn.first_name }} {{ txn.last_name }}</td>
+                            <td>
+                                <span class="badge badge-{{ 'success' if txn.transaction_type in ('deposit', 'transfer_in') else 'danger' }}">
+                                    {{ txn.transaction_type|replace('_', ' ')|title }}
+                                </span>
+                            </td>
+                            <td>₹{{ "{:,.2f}".format(txn.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Pending Loan Applications -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2>Pending Loan Applications</h2>
+                <a href="{{ url_for('admin.loans') }}?status=pending" class="btn btn-sm">View All</a>
+            </div>
+            
+            {% if loan_applications %}
+            <div class="loan-cards">
+                {% for loan in loan_applications %}
+                <div class="loan-card">
+                    <div class="loan-header">
+                        <span class="loan-type">{{ loan.loan_type|title }} Loan</span>
+                        <span class="loan-amount">₹{{ "{:,.0f}".format(loan.amount) }}</span>
+                    </div>
+                    <div class="loan-body">
+                        <p><strong>{{ loan.first_name }} {{ loan.last_name }}</strong></p>
+                        <p>{{ loan.email }}</p>
+                        <p>Applied: {{ loan.created_at.strftime('%d %b %Y') }}</p>
+                    </div>
+                    <div class="loan-actions">
+                        <form method="POST" action="{{ url_for('admin.approve_loan', loan_id=loan.loan_id) }}" style="display: inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin.reject_loan', loan_id=loan.loan_id) }}" style="display: inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="no-data">No pending loan applications</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

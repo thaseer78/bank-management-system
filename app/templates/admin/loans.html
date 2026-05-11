@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Loans - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1>📋 Manage Loans</h1>
+        <p>Review and process loan applications</p>
+    </div>
+    
+    <!-- Filter -->
+    <div class="filter-bar">
+        <form method="GET" action="{{ url_for('admin.loans') }}" class="filter-form">
+            <select name="status" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                <option value="disbursed" {% if status_filter == 'disbursed' %}selected{% endif %}>Disbursed</option>
+                <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+        </form>
+    </div>
+    
+    <!-- Loans Table -->
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Loan ID</th>
+                    <th>Customer</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>EMI</th>
+                    <th>Tenure</th>
+                    <th>Status</th>
+                    <th>Applied</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loan in loans %}
+                <tr>
+                    <td><code>{{ loan.loan_ref }}</code></td>
+                    <td>
+                        <strong>{{ loan.first_name }} {{ loan.last_name }}</strong><br>
+                        <small>{{ loan.email }}</small>
+                    </td>
+                    <td>{{ loan.loan_type|title }}</td>
+                    <td>₹{{ "{:,.2f}".format(loan.amount) }}</td>
+                    <td>₹{{ "{:,.2f}".format(loan.emi_amount) }}</td>
+                    <td>{{ loan.tenure_months }} months</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if loan.status == 'disbursed' else ('warning' if loan.status in ('pending', 'approved') else 'danger') }}">
+                            {{ loan.status|title }}
+                        </span>
+                    </td>
+                    <td>{{ loan.created_at.strftime('%d %b %Y') }}</td>
+                    <td>
+                        {% if loan.status == 'pending' %}
+                        <form method="POST" action="{{ url_for('admin.approve_loan', loan_id=loan.loan_id) }}" style="display: inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin.reject_loan', loan_id=loan.loan_id) }}" style="display: inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                        </form>
+                        {% elif loan.status == 'approved' %}
+                        <form method="POST" action="{{ url_for('admin.disburse_loan', loan_id=loan.loan_id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-primary">Disburse</button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="no-data">No loans found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card auth-card-wide">
+        <div class="auth-header">
+            <h1>🏦 Create Account</h1>
+            <p>Join SecureBank today and manage your finances easily.</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('auth.register') }}" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="first_name">First Name *</label>
+                    <input type="text" id="first_name" name="first_name" required 
+                           value="{{ data.get('first_name', '') }}" placeholder="John">
+                </div>
+                
+                <div class="form-group">
+                    <label for="last_name">Last Name *</label>
+                    <input type="text" id="last_name" name="last_name" required 
+                           value="{{ data.get('last_name', '') }}" placeholder="Doe">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" required 
+                           value="{{ data.get('email', '') }}" placeholder="john@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" id="phone" name="phone" required 
+                           value="{{ data.get('phone', '') }}" placeholder="9876543210">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="password">Password *</label>
+                    <input type="password" id="password" name="password" required 
+                           placeholder="Min 8 characters" minlength="8">
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password *</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required 
+                           placeholder="Repeat password">
+                </div>
+            </div>
+            
+            <hr class="form-divider">
+            <h3>Personal Details</h3>
+            
+            <div class="form-group">
+                <label for="address">Address</label>
+                <textarea id="address" name="address" rows="2" 
+                          placeholder="Enter your full address">{{ data.get('address', '') }}</textarea>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="city">City</label>
+                    <input type="text" id="city" name="city" 
+                           value="{{ data.get('city', '') }}" placeholder="Mumbai">
+                </div>
+                
+                <div class="form-group">
+                    <label for="state">State</label>
+                    <input type="text" id="state" name="state" 
+                           value="{{ data.get('state', '') }}" placeholder="Maharashtra">
+                </div>
+                
+                <div class="form-group">
+                    <label for="pincode">Pincode</label>
+                    <input type="text" id="pincode" name="pincode" 
+                           value="{{ data.get('pincode', '') }}" placeholder="400001">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="date_of_birth">Date of Birth</label>
+                    <input type="date" id="date_of_birth" name="date_of_birth" 
+                           value="{{ data.get('date_of_birth', '') }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="gender">Gender</label>
+                    <select id="gender" name="gender">
+                        <option value="">Select Gender</option>
+                        <option value="male" {% if data.get('gender') == 'male' %}selected{% endif %}>Male</option>
+                        <option value="female" {% if data.get('gender') == 'female' %}selected{% endif %}>Female</option>
+                        <option value="other" {% if data.get('gender') == 'other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_proof_type">ID Proof Type</label>
+                    <select id="id_proof_type" name="id_proof_type">
+                        <option value="">Select ID Type</option>
+                        <option value="aadhar">Aadhar Card</option>
+                        <option value="pan">PAN Card</option>
+                        <option value="passport">Passport</option>
+                        <option value="driving_license">Driving License</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_proof_number">ID Proof Number</label>
+                    <input type="text" id="id_proof_number" name="id_proof_number" 
+                           value="{{ data.get('id_proof_number', '') }}" placeholder="Enter ID number">
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

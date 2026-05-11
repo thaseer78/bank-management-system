@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Transfer Money - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1>↔️ Transfer Money</h1>
+        <p>Send money to another account</p>
+    </div>
+    
+    <div class="form-card">
+        <form method="POST" action="{{ url_for('customer.transfer') }}" class="transaction-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="form-group">
+                <label for="from_account_id">From Account *</label>
+                <select id="from_account_id" name="from_account_id" required onchange="updateBalance()">
+                    <option value="">Choose source account</option>
+                    {% for account in accounts %}
+                    <option value="{{ account.account_id }}" 
+                            data-balance="{{ account.balance }}" 
+                            data-min="{{ account.minimum_balance }}"
+                            data-number="{{ account.account_number }}">
+                        {{ account.account_number }} - {{ account.account_type|title }} (₹{{ "%.2f"|format(account.balance or 0) }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div id="balance-info" class="info-box" style="display: none;">
+                <p>Available for Transfer: <strong id="available-balance">₹0.00</strong></p>
+            </div>
+            
+            <div class="form-group">
+                <label for="to_account_number">To Account Number *</label>
+                <input type="text" id="to_account_number" name="to_account_number" required 
+                       placeholder="Enter beneficiary account number" 
+                       onblur="validateAccount()">
+                <div id="account-validation" class="validation-message"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="amount">Amount (₹) *</label>
+                <input type="number" id="amount" name="amount" required 
+                       min="1" max="1000000" step="0.01" placeholder="Enter amount">
+                <small class="form-hint">Maximum: ₹10,00,000 per transaction</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Remarks / Description</label>
+                <input type="text" id="description" name="description" 
+                       placeholder="e.g., Rent payment, Gift" maxlength="255">
+            </div>
+            
+            <div class="form-actions">
+                <a href="{{ url_for('customer.dashboard') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary" id="submit-btn">Transfer Money</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+function updateBalance() {
+    const select = document.getElementById('from_account_id');
+    const infoBox = document.getElementById('balance-info');
+    const amountInput = document.getElementById('amount');
+    
+    if (select.value) {
+        const option = select.options[select.selectedIndex];
+        const balance = parseFloat(option.dataset.balance);
+        const minBalance = parseFloat(option.dataset.min);
+        const available = balance - minBalance;
+        
+        document.getElementById('available-balance').textContent = '₹' + Math.max(0, available).toLocaleString('en-IN', {minimumFractionDigits: 2});
+        amountInput.max = Math.min(1000000, Math.max(0, available));
+        infoBox.style.display = 'block';
+    } else {
+        infoBox.style.display = 'none';
+    }
+}
+
+function validateAccount() {
+    const accountNumber = document.getElementById('to_account_number').value;
+    const fromAccount = document.getElementById('from_account_id');
+    const validation = document.getElementById('account-validation');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    if (!accountNumber) {
+        validation.innerHTML = '';
+        return;
+    }
+    
+    // Check if same as source account
+    if (fromAccount.value) {
+        const sourceNumber = fromAccount.options[fromAccount.selectedIndex].dataset.number;
+        if (accountNumber === sourceNumber) {
+            validation.innerHTML = '<span class="text-danger">Cannot transfer to the same account</span>';
+            submitBtn.disabled = true;
+            return;
+        }
+    }
+    
+    // Validate with API
+    fetch('/api/validate-account/' + accountNumber)
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                validation.innerHTML = '<span class="text-success">✓ ' + data.account_holder + ' (' + data.account_type + ')</span>';
+                submitBtn.disabled = false;
+            } else {
+                validation.innerHTML = '<span class="text-danger">✗ ' + data.message + '</span>';
+                submitBtn.disabled = true;
+            }
+        })
+        .catch(() => {
+            validation.innerHTML = '';
+            submitBtn.disabled = false;
+        });
+}
+</script>
+{% endblock %}
+{% endblock %}

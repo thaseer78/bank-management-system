@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Transaction History - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1>📜 Transaction History</h1>
+        <p>View all your account transactions</p>
+    </div>
+    
+    <!-- Filter -->
+    <div class="filter-bar">
+        <form method="GET" action="{{ url_for('customer.transactions') }}" class="filter-form">
+            <select name="account_id" onchange="this.form.submit()">
+                <option value="">All Accounts</option>
+                {% for account in accounts %}
+                <option value="{{ account.account_id }}" {% if selected_account == account.account_id %}selected{% endif %}>
+                    {{ account.account_number }} - {{ account.account_type|title }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    
+    <!-- Transactions Table -->
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Reference</th>
+                    <th>Account</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                <tr>
+                    <td>{{ txn.created_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+                    <td><code>{{ txn.transaction_ref }}</code></td>
+                    <td>{{ txn.account_number }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if txn.transaction_type in ('deposit', 'transfer_in', 'loan_disbursement') else 'danger' }}">
+                            {{ txn.transaction_type|replace('_', ' ')|title }}
+                        </span>
+                    </td>
+                    <td>{{ txn.description or '-' }}</td>
+                    <td class="{{ 'text-success' if txn.transaction_type in ('deposit', 'transfer_in', 'loan_disbursement') else 'text-danger' }}">
+                        {{ '+' if txn.transaction_type in ('deposit', 'transfer_in', 'loan_disbursement') else '-' }}₹{{ "{:,.2f}".format(txn.amount) }}
+                    </td>
+                    <td>₹{{ "{:,.2f}".format(txn.balance_after) }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="no-data">No transactions found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

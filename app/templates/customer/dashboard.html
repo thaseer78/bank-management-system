@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="page-header">
+        <h1>Welcome, {{ current_user.first_name }}!</h1>
+        <p>Here's your financial overview</p>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+                <h3>Total Balance</h3>
+                <p class="stat-value">₹{{ "%.2f"|format(total_balance or 0) }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">🏦</div>
+            <div class="stat-content">
+                <h3>Active Accounts</h3>
+                <p class="stat-value">{{ accounts|length }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-content">
+                <h3>Pending Loans</h3>
+                <p class="stat-value">{{ pending_loans|length }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="action-buttons">
+            <a href="{{ url_for('customer.deposit') }}" class="action-btn">
+                <span class="action-icon">➕</span>
+                <span>Deposit</span>
+            </a>
+            <a href="{{ url_for('customer.withdraw') }}" class="action-btn">
+                <span class="action-icon">➖</span>
+                <span>Withdraw</span>
+            </a>
+            <a href="{{ url_for('customer.transfer') }}" class="action-btn">
+                <span class="action-icon">↔️</span>
+                <span>Transfer</span>
+            </a>
+            <a href="{{ url_for('customer.loans') }}" class="action-btn">
+                <span class="action-icon">📝</span>
+                <span>Apply Loan</span>
+            </a>
+        </div>
+    </div>
+    
+    <div class="dashboard-grid">
+        <!-- Accounts Section -->
+        <div class="dashboard-section">
+            <h2>Your Accounts</h2>
+            <div class="accounts-list">
+                {% for account in accounts %}
+                <div class="account-card">
+                    <div class="account-type">
+                        {% if account.account_type == 'savings' %}💵{% elif account.account_type == 'checking' %}💳{% else %}🔒{% endif %}
+                        {{ account.account_type|title }} Account
+                    </div>
+                    <div class="account-number">{{ account.account_number }}</div>
+                    <div class="account-balance">₹{{ "%.2f"|format(account.balance or 0) }}</div>
+                    <div class="account-status status-{{ account.status }}">{{ account.status|title }}</div>
+                </div>
+                {% else %}
+                <p class="no-data">No accounts found. Please contact admin to open an account.</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Recent Transactions -->
+        <div class="dashboard-section">
+            <h2>Recent Transactions</h2>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for txn in recent_transactions %}
+                        <tr>
+                            <td>{{ txn.created_at.strftime('%d %b %Y') }}</td>
+                            <td>
+                                <span class="badge badge-{{ 'success' if txn.transaction_type in ('deposit', 'transfer_in') else 'danger' }}">
+                                    {{ txn.transaction_type|replace('_', ' ')|title }}
+                                </span>
+                            </td>
+                            <td class="{{ 'text-success' if txn.transaction_type in ('deposit', 'transfer_in') else 'text-danger' }}">
+                                {{ '+' if txn.transaction_type in ('deposit', 'transfer_in') else '-' }}₹{{ "%.2f"|format(txn.amount or 0) }}
+                            </td>
+                           <td>₹{{ "%.2f"|format(txn.balance_after or 0) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="no-data">No transactions yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <a href="{{ url_for('customer.transactions') }}" class="btn btn-link">View All Transactions →</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Loans - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1>📋 Loan Management</h1>
+        <p>Apply for loans and track your applications</p>
+    </div>
+    
+    <!-- Apply for Loan -->
+    <div class="form-card">
+        <h2>Apply for a New Loan</h2>
+        <form method="POST" action="{{ url_for('customer.apply_loan') }}" class="loan-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="loan_type">Loan Type *</label>
+                    <select id="loan_type" name="loan_type" required onchange="updateRate()">
+                        <option value="">Select loan type</option>
+                        <option value="personal" data-rate="12">Personal Loan (12% p.a.)</option>
+                        <option value="home" data-rate="8.5">Home Loan (8.5% p.a.)</option>
+                        <option value="car" data-rate="9.5">Car Loan (9.5% p.a.)</option>
+                        <option value="education" data-rate="8">Education Loan (8% p.a.)</option>
+                        <option value="business" data-rate="14">Business Loan (14% p.a.)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="account_id">Credit to Account *</label>
+                    <select id="account_id" name="account_id" required>
+                        <option value="">Select account</option>
+                        {% for account in accounts %}
+                        <option value="{{ account.account_id }}">
+                            {{ account.account_number }} - {{ account.account_type|title }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="amount">Loan Amount (₹) *</label>
+                    <input type="number" id="amount" name="amount" required 
+                           min="10000" max="10000000" step="1000" placeholder="Enter amount"
+                           oninput="calculateEMI()">
+                    <small class="form-hint">Min: ₹10,000 | Max: ₹1,00,00,000</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tenure">Tenure (Months) *</label>
+                    <input type="number" id="tenure" name="tenure" required 
+                           min="6" max="360" placeholder="e.g., 24"
+                           oninput="calculateEMI()">
+                    <small class="form-hint">6 to 360 months</small>
+                </div>
+            </div>
+            
+            <div id="emi-calculator" class="info-box" style="display: none;">
+                <h4>EMI Calculator</h4>
+                <p>Interest Rate: <strong id="interest-rate">-</strong>% p.a.</p>
+                <p>Monthly EMI: <strong id="emi-amount">₹0.00</strong></p>
+                <p>Total Payable: <strong id="total-payable">₹0.00</strong></p>
+                <p>Total Interest: <strong id="total-interest">₹0.00</strong></p>
+            </div>
+            
+            <div class="form-group">
+                <label for="purpose">Purpose of Loan</label>
+                <textarea id="purpose" name="purpose" rows="2" 
+                          placeholder="Briefly describe why you need this loan"></textarea>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Submit Application</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Existing Loans -->
+    <div class="section-card">
+        <h2>Your Loan Applications</h2>
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Loan ID</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>EMI</th>
+                        <th>Tenure</th>
+                        <th>Status</th>
+                        <th>Applied On</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loan in loans %}
+                    <tr>
+                        <td><code>{{ loan.loan_ref }}</code></td>
+                        <td>{{ loan.loan_type|title }}</td>
+                        <td>₹{{ "{:,.2f}".format(loan.amount) }}</td>
+                        <td>₹{{ "{:,.2f}".format(loan.emi_amount) }}</td>
+                        <td>{{ loan.tenure_months }} months</td>
+                        <td>
+                            <span class="badge badge-{{ 'success' if loan.status == 'disbursed' else ('warning' if loan.status in ('pending', 'approved') else 'danger') }}">
+                                {{ loan.status|title }}
+                            </span>
+                        </td>
+                        <td>{{ loan.created_at.strftime('%d %b %Y') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="no-data">No loan applications</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+let currentRate = 0;
+
+function updateRate() {
+    const select = document.getElementById('loan_type');
+    if (select.value) {
+        currentRate = parseFloat(select.options[select.selectedIndex].dataset.rate);
+        document.getElementById('interest-rate').textContent = currentRate;
+        calculateEMI();
+    }
+}
+
+function calculateEMI() {
+    const principal = parseFloat(document.getElementById('amount').value) || 0;
+    const tenure = parseInt(document.getElementById('tenure').value) || 0;
+    const calculator = document.getElementById('emi-calculator');
+    
+    if (principal > 0 && tenure > 0 && currentRate > 0) {
+        const monthlyRate = currentRate / 12 / 100;
+        let emi;
+        
+        if (monthlyRate > 0) {
+            emi = principal * monthlyRate * Math.pow(1 + monthlyRate, tenure) / (Math.pow(1 + monthlyRate, tenure) - 1);
+        } else {
+            emi = principal / tenure;
+        }
+        
+        const totalPayable = emi * tenure;
+        const totalInterest = totalPayable - principal;
+        
+        document.getElementById('emi-amount').textContent = '₹' + emi.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('total-payable').textContent = '₹' + totalPayable.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('total-interest').textContent = '₹' + totalInterest.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        
+        calculator.style.display = 'block';
+    } else {
+        calculator.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
+{% endblock %}

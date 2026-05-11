@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Withdraw Money - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1>💸 Withdraw Money</h1>
+        <p>Withdraw funds from your account</p>
+    </div>
+    
+    <div class="form-card">
+        <form method="POST" action="{{ url_for('customer.withdraw') }}" class="transaction-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="form-group">
+                <label for="account_id">Select Account *</label>
+                <select id="account_id" name="account_id" required onchange="updateBalance()">
+                    <option value="">Choose an account</option>
+                    {% for account in accounts %}
+                    <option value="{{ account.account_id }}" 
+                            data-balance="{{ account.balance }}" 
+                            data-min="{{ account.minimum_balance }}">
+                        {{ account.account_number }} - {{ account.account_type|title }} (Balance: ₹{{ "%.2f"|format(account.balance or 0) }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div id="balance-info" class="info-box" style="display: none;">
+                <p>Available Balance: <strong id="available-balance">₹0.00</strong></p>
+                <p>Minimum Balance Required: <strong id="min-balance">₹0.00</strong></p>
+                <p>Maximum Withdrawal: <strong id="max-withdrawal">₹0.00</strong></p>
+            </div>
+            
+            <div class="form-group">
+                <label for="amount">Amount (₹) *</label>
+                <input type="number" id="amount" name="amount" required 
+                       min="1" step="0.01" placeholder="Enter amount">
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Description</label>
+                <input type="text" id="description" name="description" 
+                       placeholder="e.g., ATM withdrawal, Bill payment" maxlength="255">
+            </div>
+            
+            <div class="form-actions">
+                <a href="{{ url_for('customer.dashboard') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Withdraw Money</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+function updateBalance() {
+    const select = document.getElementById('account_id');
+    const infoBox = document.getElementById('balance-info');
+    const amountInput = document.getElementById('amount');
+    
+    if (select.value) {
+        const option = select.options[select.selectedIndex];
+        const balance = parseFloat(option.dataset.balance);
+        const minBalance = parseFloat(option.dataset.min);
+        const maxWithdrawal = balance - minBalance;
+        
+        document.getElementById('available-balance').textContent = '₹' + balance.toLocaleString('en-IN', {minimumFractionDigits: 2});
+        document.getElementById('min-balance').textContent = '₹' + minBalance.toLocaleString('en-IN', {minimumFractionDigits: 2});
+        document.getElementById('max-withdrawal').textContent = '₹' + Math.max(0, maxWithdrawal).toLocaleString('en-IN', {minimumFractionDigits: 2});
+        
+        amountInput.max = Math.max(0, maxWithdrawal);
+        infoBox.style.display = 'block';
+    } else {
+        infoBox.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
+{% endblock %}

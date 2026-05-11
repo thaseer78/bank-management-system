@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Customers - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1>👥 Manage Customers</h1>
+        <p>View and manage all registered customers</p>
+    </div>
+    
+    <!-- Search -->
+    <div class="filter-bar">
+        <form method="GET" action="{{ url_for('admin.customers') }}" class="search-form">
+            <input type="text" name="search" placeholder="Search by name, email, or phone..." 
+                   value="{{ search }}" class="search-input">
+            <button type="submit" class="btn btn-primary">Search</button>
+            {% if search %}
+            <a href="{{ url_for('admin.customers') }}" class="btn btn-secondary">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+    
+    <!-- Customers Table -->
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Accounts</th>
+                    <th>Total Balance</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td>{{ customer.customer_id }}</td>
+                    <td>
+                        <strong>{{ customer.first_name }} {{ customer.last_name }}</strong>
+                        {% if customer.is_verified %}
+                        <span class="badge badge-success badge-sm">✓</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ customer.email }}</td>
+                    <td>{{ customer.phone }}</td>
+                    <td>{{ customer.account_count }}</td>
+                    <td>₹{{ "{:,.2f}".format(customer.total_balance) }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if customer.is_active else 'danger' }}">
+                            {{ 'Active' if customer.is_active else 'Inactive' }}
+                        </span>
+                    </td>
+                    <td>{{ customer.created_at.strftime('%d %b %Y') }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.customer_detail', customer_id=customer.customer_id) }}" 
+                           class="btn btn-sm">View</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="no-data">No customers found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

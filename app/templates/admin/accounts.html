@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Accounts - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1>🏦 Manage Accounts</h1>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.create_account') }}" class="btn btn-primary">+ Create Account</a>
+        </div>
+    </div>
+    
+    <!-- Accounts Table -->
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Account Number</th>
+                    <th>Customer</th>
+                    <th>Type</th>
+                    <th>Balance</th>
+                    <th>Min. Balance</th>
+                    <th>Interest</th>
+                    <th>Status</th>
+                    <th>Opened</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for account in accounts %}
+                <tr>
+                    <td><code>{{ account.account_number }}</code></td>
+                    <td>
+                        <a href="{{ url_for('admin.customer_detail', customer_id=account.customer_id) }}">
+                            {{ account.first_name }} {{ account.last_name }}
+                        </a>
+                    </td>
+                    <td>{{ account.account_type|title }}</td>
+                    <td>₹{{ "{:,.2f}".format(account.balance) }}</td>
+                    <td>₹{{ "{:,.2f}".format(account.minimum_balance) }}</td>
+                    <td>{{ account.interest_rate }}%</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if account.status == 'active' else 'danger' }}">
+                            {{ account.status|title }}
+                        </span>
+                    </td>
+                    <td>{{ account.created_at.strftime('%d %b %Y') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="no-data">No accounts found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
